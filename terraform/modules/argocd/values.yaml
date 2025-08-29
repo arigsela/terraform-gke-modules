@@ -1,0 +1,76 @@
+global:
+  domain: ${hostname}
+  nodeSelector:
+%{ for key, value in node_selector ~}
+    ${key}: "${value}"
+%{ endfor ~}
+
+%{ if length(tolerations) > 0 ~}
+  tolerations:
+%{ for toleration in tolerations ~}
+    - key: "${toleration.key}"
+      operator: "${toleration.operator}"
+      value: "${toleration.value}"
+      effect: "${toleration.effect}"
+%{ endfor ~}
+%{ endif ~}
+
+configs:
+  params:
+    server.insecure: false
+    server.grpc.web: true
+    
+  cm:
+    url: https://${hostname}
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+      
+%{ if workload_identity ~}
+  serviceAccount:
+    create: false
+    name: argocd-application-controller
+%{ endif ~}
+
+server:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  ingress:
+    enabled: false
+          
+%{ if workload_identity ~}
+  serviceAccount:
+    create: false
+    name: argocd-server
+%{ endif ~}
+
+repoServer:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
