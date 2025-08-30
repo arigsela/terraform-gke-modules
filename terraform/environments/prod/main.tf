@@ -157,7 +157,7 @@ module "system_node_pool" {
   autoscaling = {
     enabled        = true
     min_node_count = 1
-    max_node_count = 2
+    max_node_count = 3
   }
   
   node_config = {
@@ -180,11 +180,7 @@ module "system_node_pool" {
     
     tags = ["gke-node", "system-pool"]
     
-    taint = [{
-      key    = "system"
-      value  = "true"
-      effect = "NO_SCHEDULE"
-    }]
+    taint = []
     
     metadata                     = {}
     workload_metadata_mode       = "GKE_METADATA"
@@ -299,17 +295,20 @@ resource "helm_release" "nginx_ingress" {
           pool = "system"
         }
         
-        tolerations = [{
-          key    = "system"
-          value  = "true"
-          effect = "NoSchedule"
-        }]
+        tolerations = []
         
         resources = {
           requests = {
             cpu    = "100m"
             memory = "128Mi"
           }
+        }
+        
+        # Ensure single replica and prevent multiple pods during updates
+        replicaCount = 1
+        
+        updateStrategy = {
+          type = "Recreate"
         }
       }
     })
@@ -333,12 +332,7 @@ module "argocd" {
     pool = "system"
   }
   
-  tolerations = [{
-    key      = "system"
-    operator = "Equal"
-    value    = "true"
-    effect   = "NoSchedule"
-  }]
+  tolerations = []
   
   # Workload Identity integration
   workload_identity_enabled         = true
